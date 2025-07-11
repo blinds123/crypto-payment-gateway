@@ -1,0 +1,72 @@
+{
+  "name": "Crypto Payment Gateway",
+  "description": "Seamless card-to-crypto payment gateway with zero KYC requirements",
+  "repository": "https://github.com/your-username/crypto-payment-gateway",
+  "logo": "https://your-domain.com/logo.png",
+  "keywords": [
+    "crypto",
+    "payment",
+    "gateway",
+    "crossmint",
+    "bitcoin",
+    "ethereum"
+  ],
+  "website": "https://your-domain.com",
+  "success_url": "/checkout",
+  "env": {
+    "NODE_ENV": {
+      "description": "Node environment",
+      "value": "production"
+    },
+    "CROSSMINT_CLIENT_ID": {
+      "description": "Your Crossmint production client ID",
+      "required": true
+    },
+    "CROSSMINT_API_KEY": {
+      "description": "Your Crossmint production API key",
+      "required": true
+    },
+    "CROSSMINT_ENVIRONMENT": {
+      "description": "Crossmint environment",
+      "value": "production"
+    },
+    "BASE_URL": {
+      "description": "Your application base URL",
+      "value": "https://your-app.herokuapp.com"
+    },
+    "SESSION_SECRET": {
+      "description": "Session secret key",
+      "generator": "secret"
+    },
+    "JWT_SECRET": {
+      "description": "JWT secret key",
+      "generator": "secret"
+    },
+    "LOG_LEVEL": {
+      "description": "Logging level",
+      "value": "info"
+    }
+  },
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "standard-1x"
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-redis:hobby-dev"
+    },
+    {
+      "plan": "papertrail:choklad"
+    }
+  ],
+  "buildpacks": [
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "scripts": {
+    "postdeploy": "npm run build"
+  }
+}
