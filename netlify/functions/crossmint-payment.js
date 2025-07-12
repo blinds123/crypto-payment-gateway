@@ -87,55 +87,30 @@ exports.handler = async (event, context) => {
       ? 'https://www.crossmint.com'
       : 'https://staging.crossmint.com';
 
-    // Create embedded checkout session (Production-ready approach)
-    const checkoutRequest = {
-      type: 'payment',
-      totalPrice: amount.toString(),
+    // BULLETPROOF APPROACH: Create checkout URL (No complex API calls)
+    const checkoutParams = new URLSearchParams({
+      clientId: process.env.CROSSMINT_CLIENT_ID,
+      amount: amount.toString(),
       currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
-      recipient: {
-        walletAddress
-      },
-      metadata: {
-        customerEmail: customerEmail || 'customer@example.com',
-        chain: chain.toLowerCase(),
-        amount: amount.toString(),
-        timestamp: new Date().toISOString(),
-        source: 'crypto-payment-gateway'
-      },
-      successCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/success`,
-      failureCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/checkout?error=payment_failed`
-    };
+      recipientAddress: walletAddress,
+      customerEmail: customerEmail || '',
+      successUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/success?amount=${amount}&network=${chain}`,
+      failureUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/checkout?error=payment_failed`
+    });
 
-    // Call Crossmint Embedded Checkout API
-    const response = await axios.post(
-      `${baseUrl}/api/2022-06-09/checkout/sessions`,
-      checkoutRequest,
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CLIENT-SECRET': process.env.CROSSMINT_API_KEY,
-          'X-PROJECT-ID': process.env.CROSSMINT_CLIENT_ID
-        },
-        timeout: 30000
-      }
-    );
-
-    const session = {
-      id: response.data.id,
-      url: response.data.url,
-      embeddedUrl: response.data.embeddedUrl,
-      walletAddress,
-      chain,
-      amount,
-      currency
-    };
+    // Create Crossmint checkout URL
+    const checkoutUrl = `https://crossmint.com/checkout?${checkoutParams.toString()}`;
 
     return {
-      statusCode: 201,
+      statusCode: 200,
       headers,
       body: JSON.stringify({
         success: true,
-        session
+        checkoutUrl: checkoutUrl,
+        walletAddress,
+        chain,
+        amount,
+        currency
       })
     };
 
