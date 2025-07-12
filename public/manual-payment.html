@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Your Payment - Crypto Payment Gateway</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .payment-info {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .payment-info h3 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #ecfdf5;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+        }
+
+        .info-value {
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .steps {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 25px 0;
+            text-align: left;
+        }
+
+        .steps h3 {
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .step {
+            margin-bottom: 10px;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            background: white;
+            color: #667eea;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .steps {
+            counter-reset: step-counter;
+        }
+
+        .btn {
+            background: white;
+            color: #667eea;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .copy-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 4px 8px;
+            font-size: 0.8rem;
+            margin-left: 10px;
+            cursor: pointer;
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">💳</div>
+        <h1>Complete Your Payment</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 30px; opacity: 0.9;">
+            Let's get your crypto payment processed quickly and securely
+        </p>
+        
+        <div class="payment-info">
+            <h3>📋 Payment Details</h3>
+            <div class="info-row">
+                <span class="info-label">Amount:</span>
+                <span class="info-value" id="amount">$20 USD</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Currency to Receive:</span>
+                <span class="info-value">USDC (on Polygon)</span>
+            </div>
+            <div class="info-row">
+                <span class="info-label">Your Wallet:</span>
+                <span class="info-value">
+                    0xE5173e7c3089bD89cd1341b637b8e1951745ED5C
+                    <button class="copy-btn" onclick="copyWallet()">Copy</button>
+                </span>
+            </div>
+        </div>
+
+        <div class="steps">
+            <h3>🚀 Quick Payment Steps</h3>
+            <div class="step">Click "Open Crossmint" below to visit their secure payment page</div>
+            <div class="step">Select "Buy Crypto" or "Pay with Card"</div>
+            <div class="step">Enter amount: $20 USD</div>
+            <div class="step">Select currency: USDC</div>
+            <div class="step">Select network: Polygon</div>
+            <div class="step">Enter wallet address: 0xE517...ED5C (or paste from above)</div>
+            <div class="step">Complete payment with your credit card</div>
+            <div class="step">USDC will arrive in your wallet within 5 minutes!</div>
+        </div>
+
+        <div style="margin: 30px 0;">
+            <a href="https://www.crossmint.com" target="_blank" class="btn">
+                🚀 Open Crossmint
+            </a>
+            <a href="/checkout" class="btn">
+                ← Back to Checkout
+            </a>
+        </div>
+
+        <div style="margin-top: 30px; opacity: 0.8; font-size: 0.9rem;">
+            <p>💡 <strong>Pro Tip:</strong> Bookmark this page for easy reference</p>
+            <p>🔒 <strong>Security:</strong> Always verify you're on crossmint.com</p>
+            <p>⚡ <strong>Speed:</strong> Payments typically complete in under 5 minutes</p>
+        </div>
+    </div>
+
+    <script>
+        // Get payment details from URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const amount = urlParams.get('amount') || '20';
+        const currency = urlParams.get('currency') || 'USD';
+
+        // Update amount display
+        document.getElementById('amount').textContent = `$${amount} ${currency}`;
+
+        // Copy wallet address
+        function copyWallet() {
+            const wallet = '0xE5173e7c3089bD89cd1341b637b8e1951745ED5C';
+            navigator.clipboard.writeText(wallet).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#10b981';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '';
+                }, 2000);
+            });
+        }
+
+        // Auto-open Crossmint after 3 seconds
+        setTimeout(() => {
+            if (confirm('Ready to complete your payment? Click OK to open Crossmint in a new tab.')) {
+                window.open('https://www.crossmint.com', '_blank');
+            }
+        }, 3000);
+    </script>
+</body>
+</html>

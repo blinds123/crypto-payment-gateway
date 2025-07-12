@@ -427,15 +427,11 @@
             }
         }
 
-        // Fallback manual redirect to Crossmint
+        // Fallback manual payment flow
         function redirectToCrossmintManual(paymentData) {
-            // Show user what to do manually
-            showError(`Please visit Crossmint manually: Pay $${paymentData.amount} ${paymentData.currency} to wallet 0xE5173e7c3089bD89cd1341b637b8e1951745ED5C`);
-            
-            // Open Crossmint in new tab
-            setTimeout(() => {
-                window.open('https://www.crossmint.com', '_blank');
-            }, 3000);
+            // Redirect to manual payment page with details
+            const manualUrl = `/manual-payment?amount=${paymentData.amount}&currency=${paymentData.currency}&network=${paymentData.chain}`;
+            window.location.href = manualUrl;
         }
 
         // Removed old embedded checkout functions - now using hosted checkout
