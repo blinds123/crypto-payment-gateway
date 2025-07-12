@@ -110,9 +110,9 @@ exports.handler = async (event, context) => {
     }
 
     try {
-      // Create order using modern Crossmint API
+      // Create order using modern Crossmint API (PRODUCTION)
       const response = await axios.post(
-        'https://staging.crossmint.com/api/2022-06-09/orders',
+        'https://www.crossmint.com/api/2022-06-09/orders',
         orderData,
         {
           headers: {
@@ -124,7 +124,7 @@ exports.handler = async (event, context) => {
         }
       );
 
-      const checkoutUrl = response.data.onRamp?.url || `https://staging.crossmint.com/checkout/${response.data.id}`;
+      const checkoutUrl = response.data.onRamp?.url || `https://www.crossmint.com/checkout/${response.data.id}`;
       
       console.log('Crossmint order created successfully:', response.data.id);
 
@@ -142,7 +142,7 @@ exports.handler = async (event, context) => {
           debug: {
             apiUsed: 'modern-crossmint-orders-api',
             orderCreated: true,
-            environment: 'staging',
+            environment: 'production',
             timestamp: new Date().toISOString()
           }
         })
