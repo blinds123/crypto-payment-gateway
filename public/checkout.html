@@ -316,7 +316,19 @@
             </div>
         </div>
 
-        <!-- Checkout widget removed - redirecting to Crossmint hosted checkout -->
+        <div class="checkout-widget" id="checkout-widget" style="display: none;">
+            <div class="widget-container">
+                <div class="widget-header">
+                    <h3>💳 Complete Your Payment</h3>
+                    <div class="payment-details" id="payment-details">
+                        <!-- Payment details will be populated here -->
+                    </div>
+                </div>
+                <div id="crossmint-pay-element">
+                    <!-- Crossmint Pay Element will be loaded here -->
+                </div>
+            </div>
+        </div>
 
         <div class="features">
             <div class="feature">
@@ -345,14 +357,21 @@
         </div>
     </div>
 
+    <!-- Crossmint SDK -->
+    <script src="https://www.crossmint.com/assets/crossmint.js"></script>
+    
     <script>
         // Configuration
         const API_BASE = '/.netlify/functions';
         let currentSession = null;
+        
+        // Crossmint configuration
+        const CROSSMINT_PROJECT_ID = 'ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9';
 
         // DOM elements
         const form = document.getElementById('payment-form');
         const loading = document.getElementById('loading');
+        const checkoutWidget = document.getElementById('checkout-widget');
         const submitBtn = document.getElementById('submit-btn');
         const successAlert = document.getElementById('success-alert');
         const errorAlert = document.getElementById('error-alert');
@@ -372,21 +391,29 @@
             await createPaymentSession(paymentData);
         });
 
-        // Create payment session using Crossmint widget (Genius approach)
+        // Create payment session using Crossmint (BULLETPROOF approach)
         async function createPaymentSession(paymentData) {
             try {
                 showLoading(true);
                 hideAlerts();
 
-                // Use Crossmint's direct hosted checkout - no API call needed!
-                const checkoutUrl = buildCrossmintCheckoutUrl(paymentData);
-                
-                showSuccess('Redirecting to secure Crossmint checkout...');
-                
-                // Redirect to Crossmint's hosted checkout
-                setTimeout(() => {
-                    window.location.href = checkoutUrl;
-                }, 1500);
+                // Try multiple Crossmint integration methods
+                if (typeof window.CrossmintPayButton !== 'undefined') {
+                    // Method 1: Use Crossmint widget
+                    launchCrossmintWidget(paymentData);
+                } else if (typeof window.CrossmintPayElement !== 'undefined') {
+                    // Method 2: Use Crossmint Pay Element (embedded)
+                    loadCrossmintPayElement(paymentData);
+                } else {
+                    // Method 3: Fallback to hosted checkout with correct parameters
+                    const checkoutUrl = buildCrossmintCheckoutUrl(paymentData);
+                    
+                    showSuccess('Redirecting to secure Crossmint checkout...');
+                    
+                    setTimeout(() => {
+                        window.location.href = checkoutUrl;
+                    }, 1500);
+                }
 
             } catch (error) {
                 console.error('Payment session creation failed:', error);
@@ -396,10 +423,97 @@
             }
         }
 
-        // Build Crossmint hosted checkout URL (Production-ready)
+        // Launch Crossmint widget (Most reliable method)
+        function launchCrossmintWidget(paymentData) {
+            try {
+                const payButton = new window.CrossmintPayButton({
+                    projectId: CROSSMINT_PROJECT_ID,
+                    environment: 'production',
+                    paymentMethod: 'fiat',
+                    currency: paymentData.currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
+                    totalPrice: paymentData.amount.toString(),
+                    recipient: {
+                        walletAddress: '0xE5173e7c3089bD89cd1341b637b8e1951745ED5C'
+                    },
+                    onSuccess: (payment) => {
+                        console.log('Payment successful:', payment);
+                        window.location.href = `/success?amount=${paymentData.amount}&network=${paymentData.chain}&tx=${payment.transactionId}`;
+                    },
+                    onFailure: (error) => {
+                        console.error('Payment failed:', error);
+                        showError('Payment failed. Please try again.');
+                    }
+                });
+
+                // Launch the widget
+                payButton.open();
+                showSuccess('Opening secure Crossmint payment widget...');
+                
+            } catch (error) {
+                console.error('Widget launch failed:', error);
+                // Fallback to URL method
+                const checkoutUrl = buildCrossmintCheckoutUrl(paymentData);
+                window.location.href = checkoutUrl;
+            }
+        }
+
+        // Load Crossmint Pay Element (Embedded method)
+        function loadCrossmintPayElement(paymentData) {
+            try {
+                // Show payment details
+                const detailsContainer = document.getElementById('payment-details');
+                detailsContainer.innerHTML = `
+                    <div>
+                        <strong>Amount:</strong> ${paymentData.currency} ${paymentData.amount}
+                    </div>
+                    <div>
+                        <strong>Network:</strong> ${capitalizeFirst(paymentData.chain)}
+                    </div>
+                    <div>
+                        <strong>Wallet:</strong> 0xE517...ED5C
+                    </div>
+                `;
+
+                // Create Pay Element
+                const payElement = new window.CrossmintPayElement({
+                    projectId: CROSSMINT_PROJECT_ID,
+                    environment: 'production',
+                    currency: paymentData.currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
+                    totalPrice: paymentData.amount.toString(),
+                    recipient: {
+                        walletAddress: '0xE5173e7c3089bD89cd1341b637b8e1951745ED5C'
+                    },
+                    onSuccess: (payment) => {
+                        console.log('Payment successful:', payment);
+                        window.location.href = `/success?amount=${paymentData.amount}&network=${paymentData.chain}&tx=${payment.transactionId}`;
+                    },
+                    onFailure: (error) => {
+                        console.error('Payment failed:', error);
+                        showError('Payment failed. Please try again.');
+                    }
+                });
+
+                // Mount to element
+                payElement.mount('#crossmint-pay-element');
+                
+                // Show widget
+                checkoutWidget.style.display = 'block';
+                checkoutWidget.scrollIntoView({ behavior: 'smooth' });
+                
+                showSuccess('Crossmint payment element loaded successfully!');
+                
+            } catch (error) {
+                console.error('Pay Element failed:', error);
+                // Fallback to URL method
+                const checkoutUrl = buildCrossmintCheckoutUrl(paymentData);
+                window.location.href = checkoutUrl;
+            }
+        }
+
+        // Build Crossmint hosted checkout URL (Fallback method)
         function buildCrossmintCheckoutUrl(paymentData) {
             const params = new URLSearchParams({
-                clientId: 'ck_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9',
+                projectId: CROSSMINT_PROJECT_ID,
                 amount: paymentData.amount,
                 currency: paymentData.currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
                 recipientAddress: '0xE5173e7c3089bD89cd1341b637b8e1951745ED5C',
@@ -442,10 +556,13 @@
             return str.charAt(0).toUpperCase() + str.slice(1);
         }
 
-        // Initialize page
+        // Initialize Crossmint when page loads
         document.addEventListener('DOMContentLoaded', () => {
             console.log('Crypto Payment Gateway initialized');
+            console.log('Crossmint SDK loaded:', typeof window.CrossmintPayButton !== 'undefined' || typeof window.CrossmintPayElement !== 'undefined');
         });
+
+        // Removed duplicate event listener
     </script>
 </body>
 </html>
