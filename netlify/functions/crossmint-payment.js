@@ -64,34 +64,37 @@ exports.handler = async (event, context) => {
       ? 'https://www.crossmint.com'
       : 'https://staging.crossmint.com';
 
-    // Create payment request
-    const paymentRequest = {
+    // Create order request (Crossmint 2025 format)
+    const orderRequest = {
+      recipient: {
+        email: customerEmail || 'customer@example.com',
+        walletAddress
+      },
+      locale: 'en-US',
       payment: {
-        currency: currency.toUpperCase(),
-        amount: amount.toString(),
-        recipient: {
-          walletAddress,
-          chain: chain.toLowerCase()
-        },
+        receiptEmail: customerEmail || 'customer@example.com',
+        method: chain.toLowerCase(),
+        currency: currency.toLowerCase(),
+        amount: amount.toString()
+      },
+      lineItems: {
+        totalPrice: amount.toString(),
+        description: `${currency} ${amount} to ${chain} payment`,
         metadata: {
-          customerEmail,
           timestamp: new Date().toISOString(),
           source: 'netlify-crypto-gateway'
         }
-      },
-      successCallbackUrl: `${process.env.URL || 'https://your-site.netlify.app'}/api/crossmint/success`,
-      failureCallbackUrl: `${process.env.URL || 'https://your-site.netlify.app'}/api/crossmint/failure`
+      }
     };
 
     // Call Crossmint API
     const response = await axios.post(
-      `${baseUrl}/api/2022-06-09/checkout/sessions`,
-      paymentRequest,
+      `${baseUrl}/api/2022-06-09/orders`,
+      orderRequest,
       {
         headers: {
           'Content-Type': 'application/json',
-          'X-CLIENT-SECRET': process.env.CROSSMINT_API_KEY,
-          'X-PROJECT-ID': process.env.CROSSMINT_CLIENT_ID
+          'X-API-KEY': process.env.CROSSMINT_API_KEY
         },
         timeout: 30000
       }
