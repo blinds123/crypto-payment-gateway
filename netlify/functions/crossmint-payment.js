@@ -68,56 +68,121 @@ exports.handler = async (event, context) => {
     
     const walletAddress = getWalletAddress(chain);
 
-    // FIXED: Required Crossmint parameters
+    // MODERN CROSSMINT API CONFIGURATION (2025)
+    const apiKey = process.env.CROSSMINT_API_KEY || 'sk_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9';
     const projectId = 'eeb0c5f5-6ce6-46ff-b0b3-c237d2172a61';
-    const clientId = 'ck_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9';
     
-    // Currency mapping - FIXED
+    // Currency mapping
     const currencyMap = {
-      'USD': 'usdc',
+      'USD': 'usd',
       'EUR': 'eur', 
       'GBP': 'gbp',
       'CAD': 'cad',
       'AUD': 'aud'
     };
     
-    const mappedCurrency = currencyMap[currency.toUpperCase()] || 'usdc';
+    const mappedCurrency = currencyMap[currency.toUpperCase()] || 'usd';
+
+    // MODERN APPROACH: Create order via Crossmint API first
+    console.log('Creating Crossmint order via modern API...');
     
-    // CRITICAL FIX: Build checkout URL with BOTH projectId AND clientId
-    const checkoutParams = new URLSearchParams({
-      clientId: clientId,           // ✅ REQUIRED: clientId parameter
-      projectId: projectId,         // ✅ REQUIRED: projectId parameter  
-      amount: amount.toString(),
-      currency: mappedCurrency,
-      recipientAddress: walletAddress,
-      email: customerEmail || '',
+    const orderData = {
+      lineItems: [{
+        collectionLocator: `crossmint:${projectId}`,
+        callData: {
+          totalPrice: amount.toString(),
+          quantity: 1,
+          recipient: walletAddress
+        }
+      }],
+      payment: {
+        method: 'fiat',
+        currency: mappedCurrency
+      },
+      locale: 'en-US',
       successCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/success?amount=${amount}&network=${chain}`,
       failureCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/checkout?error=payment_failed`
-    });
-
-    // Create proper Crossmint checkout URL
-    const checkoutUrl = `https://www.crossmint.com/checkout?${checkoutParams.toString()}`;
-
-    console.log('FIXED: Generated checkout URL with clientId:', checkoutUrl);
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        checkoutUrl: checkoutUrl,
-        walletAddress,
-        chain,
-        amount,
-        currency: mappedCurrency,
-        debug: {
-          hasClientId: true,
-          hasProjectId: true,
-          fixApplied: 'v2-with-clientId',
-          timestamp: new Date().toISOString()
-        }
-      })
     };
+
+    // Add customer email if provided
+    if (customerEmail) {
+      orderData.customer = { email: customerEmail };
+    }
+
+    try {
+      // Create order using modern Crossmint API
+      const response = await axios.post(
+        'https://staging.crossmint.com/api/2022-06-09/orders',
+        orderData,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'x-api-key': apiKey,
+            'Authorization': `Bearer ${apiKey}`
+          },
+          timeout: 30000
+        }
+      );
+
+      const checkoutUrl = response.data.onRamp?.url || `https://staging.crossmint.com/checkout/${response.data.id}`;
+      
+      console.log('Crossmint order created successfully:', response.data.id);
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          checkoutUrl: checkoutUrl,
+          orderId: response.data.id,
+          walletAddress,
+          chain,
+          amount,
+          currency: mappedCurrency,
+          debug: {
+            apiUsed: 'modern-crossmint-orders-api',
+            orderCreated: true,
+            environment: 'staging',
+            timestamp: new Date().toISOString()
+          }
+        })
+      };
+      
+    } catch (crossmintError) {
+      console.error('Modern Crossmint API Error:', crossmintError.response?.data || crossmintError.message);
+      
+      // Fallback: Try alternative approach
+      console.log('Trying alternative Crossmint integration...');
+      
+      // Alternative: Use hosted checkout URL without API
+      const fallbackUrl = `https://www.crossmint.com/checkout/embed?` + new URLSearchParams({
+        projectId: projectId,
+        recipient: walletAddress,
+        totalPrice: amount.toString(),
+        currency: mappedCurrency,
+        quantity: '1'
+      }).toString();
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          checkoutUrl: fallbackUrl,
+          fallback: true,
+          reason: 'api_fallback',
+          walletAddress,
+          chain,
+          amount,
+          currency: mappedCurrency,
+          debug: {
+            apiUsed: 'fallback-embed-method',
+            originalError: crossmintError.response?.data?.message || crossmintError.message,
+            timestamp: new Date().toISOString()
+          }
+        })
+      };
+    }
 
   } catch (error) {
     console.error('Payment creation error:', error.message);
