@@ -1,6 +1,19 @@
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
+// Map user-friendly chain names to Crossmint payment methods
+function getPaymentMethod(chain) {
+  const methodMap = {
+    'ethereum': 'ethereum',
+    'bitcoin': 'bsc',
+    'polygon': 'polygon',
+    'arbitrum': 'arbitrum',
+    'optimism': 'optimism',
+    'base': 'base'
+  };
+  return methodMap[chain.toLowerCase()] || 'ethereum';
+}
+
 exports.handler = async (event, context) => {
   // CORS headers
   const headers = {
@@ -54,37 +67,51 @@ exports.handler = async (event, context) => {
       };
     }
 
-    // Generate wallet address (simplified for demo)
-    const walletAddress = chain === 'bitcoin' 
-      ? `1${Math.random().toString(36).substr(2, 33)}` // Simplified Bitcoin address
-      : `0x${Math.random().toString(16).substr(2, 40)}`; // Simplified Ethereum address
+    // Generate proper wallet address format by chain
+    const getWalletAddress = (chain) => {
+      const addresses = {
+        'bitcoin': `bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4`,
+        'ethereum': `0x742d35Cc6634C0532925a3b8D46C0Ac63e8c38B6`, 
+        'polygon': `0xE5173e7c3089bD89cd1341b637b8e1951745ED5C`,
+        'arbitrum': `0x742d35Cc6634C0532925a3b8D46C0Ac63e8c38B6`,
+        'optimism': `0x742d35Cc6634C0532925a3b8D46C0Ac63e8c38B6`,
+        'base': `0x742d35Cc6634C0532925a3b8D46C0Ac63e8c38B6`
+      };
+      return addresses[chain.toLowerCase()] || addresses['ethereum'];
+    };
+    
+    const walletAddress = getWalletAddress(chain);
 
     // Crossmint API configuration
     const baseUrl = process.env.CROSSMINT_ENVIRONMENT === 'production'
       ? 'https://www.crossmint.com'
       : 'https://staging.crossmint.com';
 
-    // Create order request (Crossmint 2025 format)
+    // Create order request for crypto payment (Crossmint 2025 format)
+    // Note: This creates a simplified payment order
     const orderRequest = {
       recipient: {
-        email: customerEmail || 'customer@example.com',
         walletAddress
       },
       locale: 'en-US',
       payment: {
         receiptEmail: customerEmail || 'customer@example.com',
-        method: chain.toLowerCase(),
-        currency: currency.toLowerCase(),
-        amount: amount.toString()
+        currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
+        method: getPaymentMethod(chain)
       },
-      lineItems: {
-        totalPrice: amount.toString(),
-        description: `${currency} ${amount} to ${chain} payment`,
-        metadata: {
-          timestamp: new Date().toISOString(),
-          source: 'netlify-crypto-gateway'
+      lineItems: [{
+        collectionLocator: `crossmint:default`,
+        callData: {
+          totalPrice: amount.toString(),
+          currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
+          chain: chain.toLowerCase(),
+          description: `${currency} ${amount} payment to ${chain}`,
+          metadata: {
+            timestamp: new Date().toISOString(),
+            source: 'netlify-crypto-gateway'
+          }
         }
-      }
+      }]
     };
 
     // Call Crossmint API
