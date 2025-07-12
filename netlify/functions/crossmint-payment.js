@@ -91,7 +91,8 @@ exports.handler = async (event, context) => {
     const projectId = 'eeb0c5f5-6ce6-46ff-b0b3-c237d2172a61';  // Your actual Crossmint project ID
     
     const checkoutParams = new URLSearchParams({
-      projectId: projectId,  // Using your real Project ID
+      clientId: process.env.CROSSMINT_CLIENT_ID,  // CRITICAL: Add clientId parameter
+      projectId: projectId,  // Keep projectId as well
       amount: amount.toString(),
       currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
       recipientAddress: walletAddress,
