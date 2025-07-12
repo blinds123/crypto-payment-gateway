@@ -87,19 +87,22 @@ exports.handler = async (event, context) => {
       ? 'https://www.crossmint.com'
       : 'https://staging.crossmint.com';
 
-    // BULLETPROOF APPROACH: Create checkout URL (No complex API calls)
+    // ULTRA-FIXED APPROACH: Extract project ID from client ID and use correct parameters
+    // Extract project ID from client key (remove ck_production_ prefix)
+    const projectId = process.env.CROSSMINT_CLIENT_ID.replace('ck_production_', '').replace('ck_staging_', '');
+    
     const checkoutParams = new URLSearchParams({
-      clientId: process.env.CROSSMINT_CLIENT_ID,
+      projectId: projectId,  // FIXED: Use projectId not clientId
       amount: amount.toString(),
       currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
       recipientAddress: walletAddress,
-      customerEmail: customerEmail || '',
-      successUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/success?amount=${amount}&network=${chain}`,
-      failureUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/checkout?error=payment_failed`
+      email: customerEmail || '',
+      successCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/success?amount=${amount}&network=${chain}`,
+      failureCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/checkout?error=payment_failed`
     });
 
-    // Create Crossmint checkout URL
-    const checkoutUrl = `https://crossmint.com/checkout?${checkoutParams.toString()}`;
+    // Create Crossmint checkout URL with correct parameter names
+    const checkoutUrl = `https://www.crossmint.com/checkout?${checkoutParams.toString()}`;
 
     return {
       statusCode: 200,
