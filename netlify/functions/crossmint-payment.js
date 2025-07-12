@@ -96,7 +96,7 @@ exports.handler = async (event, context) => {
         }
       }],
       payment: {
-        method: 'fiat',
+        method: chain.toLowerCase(), // Use the blockchain network directly
         currency: mappedCurrency
       },
       locale: 'en-US',
