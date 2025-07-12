@@ -90,8 +90,11 @@ exports.handler = async (event, context) => {
     // FINAL SOLUTION: Use the real Project ID provided by user
     const projectId = 'eeb0c5f5-6ce6-46ff-b0b3-c237d2172a61';  // Your actual Crossmint project ID
     
+    // Build checkout parameters with proper clientId
+    const clientId = process.env.CROSSMINT_CLIENT_ID || 'ck_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9';
+    
     const checkoutParams = new URLSearchParams({
-      clientId: process.env.CROSSMINT_CLIENT_ID,  // CRITICAL: Add clientId parameter
+      clientId: clientId,  // CRITICAL: Add clientId parameter
       projectId: projectId,  // Keep projectId as well
       amount: amount.toString(),
       currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
