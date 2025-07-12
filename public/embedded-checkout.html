@@ -452,63 +452,79 @@
             await setupEmbeddedCheckout(paymentData);
         });
 
-        // Initialize embedded Crossmint checkout
+        // Initialize embedded Crossmint checkout (FIXED - Uses hosted checkout)
         async function setupEmbeddedCheckout(paymentData) {
             try {
                 showLoading(true);
                 hideAlerts();
 
-                const walletAddress = walletAddresses[paymentData.chain] || walletAddresses['polygon'];
-                
                 // Clear existing checkout widget
-                checkoutWidget.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading secure checkout...</p></div>';
+                checkoutWidget.innerHTML = '<div class="loading"><div class="spinner"></div><p>Creating secure checkout session...</p></div>';
 
-                // Initialize Crossmint embedded checkout
-                const crossmintConfig = {
-                    clientId: CLIENT_ID,
-                    showOverlay: false,
-                    colors: {
-                        primary: '#667eea',
-                        background: '#ffffff',
-                        text: '#374151'
-                    }
-                };
-
-                // Create payment request
-                const paymentRequest = {
-                    type: 'payment',
-                    payment: {
-                        method: 'fiat',
-                        currency: paymentData.currency.toLowerCase()
+                // Use our working serverless function to create checkout URL
+                const response = await fetch('/.netlify/functions/crossmint-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
                     },
-                    lineItems: [{
-                        collectionLocator: `crossmint:${PROJECT_ID}`,
-                        callData: {
-                            totalPrice: paymentData.amount.toString(),
-                            quantity: 1,
-                            recipientAddress: walletAddress
-                        }
-                    }],
-                    customer: paymentData.customerEmail ? { email: paymentData.customerEmail } : undefined,
-                    successCallbackUrl: `${window.location.origin}/success?amount=${paymentData.amount}&network=${paymentData.chain}`,
-                    failureCallbackUrl: `${window.location.origin}/embedded-checkout?error=payment_failed`
-                };
+                    body: JSON.stringify(paymentData)
+                });
 
-                // Initialize embedded checkout using Crossmint SDK
-                if (window.CrossmintSDK) {
-                    const checkout = new window.CrossmintSDK.EmbeddedCheckout(crossmintConfig);
-                    await checkout.create(paymentRequest, checkoutWidget);
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    // Show the checkout URL with embedded interface
+                    checkoutWidget.innerHTML = `
+                        <div style="text-align: center; padding: 40px;">
+                            <div style="font-size: 3rem; margin-bottom: 20px;">🚀</div>
+                            <h3 style="margin-bottom: 15px; color: #374151;">Secure Checkout Ready</h3>
+                            <p style="margin-bottom: 25px; color: #6b7280;">Your payment session has been created successfully</p>
+                            
+                            <div style="background: #f8fafc; padding: 20px; border-radius: 10px; margin: 20px 0;">
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; text-align: left; font-size: 14px;">
+                                    <div><strong>Amount:</strong> $${paymentData.amount} ${paymentData.currency}</div>
+                                    <div><strong>Network:</strong> ${paymentData.chain.charAt(0).toUpperCase() + paymentData.chain.slice(1)}</div>
+                                    <div><strong>Receiving:</strong> ~${paymentData.amount} USDC</div>
+                                    <div><strong>Wallet:</strong> ${result.walletAddress.substring(0, 6)}...${result.walletAddress.substring(38)}</div>
+                                </div>
+                            </div>
+                            
+                            <a href="${result.checkoutUrl}" target="_blank" 
+                               style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                                      color: white; padding: 16px 32px; border-radius: 8px; 
+                                      text-decoration: none; font-weight: 600; display: inline-block;
+                                      transition: transform 0.2s;"
+                               onmouseover="this.style.transform='translateY(-2px)'"
+                               onmouseout="this.style.transform='translateY(0px)'">
+                                Continue to Secure Payment →
+                            </a>
+                            
+                            <p style="margin-top: 15px; font-size: 12px; color: #9ca3af;">
+                                ✅ Secured by Crossmint • 🔒 Bank-grade encryption
+                            </p>
+                        </div>
+                    `;
                     
-                    showSuccess('Embedded checkout initialized successfully!');
+                    showSuccess('Checkout session created successfully!');
+                    
+                    // Auto-open after 3 seconds
+                    setTimeout(() => {
+                        if (confirm('Ready to complete your payment? Click OK to open the secure checkout.')) {
+                            window.open(result.checkoutUrl, '_blank');
+                        }
+                    }, 3000);
                 } else {
-                    throw new Error('Crossmint SDK not loaded');
+                    throw new Error(result.error || 'Failed to create checkout session');
                 }
 
             } catch (error) {
-                console.error('Embedded checkout setup failed:', error);
+                console.error('Checkout setup failed:', error);
+                showError('Checkout initialization failed. Using fallback method...');
                 
-                // Fallback to hosted checkout
-                await createHostedCheckout(paymentData);
+                // Fallback to manual payment
+                setTimeout(() => {
+                    createHostedCheckout(paymentData);
+                }, 2000);
                 
             } finally {
                 showLoading(false);
