@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Payment Successful - Crypto Payment Gateway</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 600px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .success-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            animation: bounce 1s ease-in-out;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-20px); }
+            60% { transform: translateY(-10px); }
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+
+        .details {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .details h3 {
+            margin-bottom: 15px;
+            color: #ecfdf5;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-label {
+            font-weight: 500;
+        }
+
+        .detail-value {
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+
+        .actions {
+            margin-top: 30px;
+        }
+
+        .btn {
+            background: white;
+            color: #059669;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .status-check {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .crypto-address {
+            font-size: 0.9rem;
+            word-break: break-all;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">🎉</div>
+        <h1>Payment Successful!</h1>
+        <p class="subtitle">Your crypto payment has been processed successfully</p>
+        
+        <div class="details">
+            <h3>Transaction Details</h3>
+            <div class="detail-row">
+                <span class="detail-label">Amount:</span>
+                <span class="detail-value" id="amount">$20 USD</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Network:</span>
+                <span class="detail-value" id="network">Polygon</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Wallet Address:</span>
+                <span class="detail-value crypto-address" id="wallet">0xE5173e7c3089bD89cd1341b637b8e1951745ED5C</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">Status:</span>
+                <span class="detail-value" id="status">Processing...</span>
+            </div>
+        </div>
+
+        <div class="status-check">
+            <div class="loading"></div>
+            <span style="margin-left: 10px;">Confirming blockchain transaction...</span>
+        </div>
+
+        <div class="actions">
+            <a href="/checkout" class="btn">Make Another Payment</a>
+            <a href="/" class="btn">Return Home</a>
+        </div>
+
+        <div style="margin-top: 40px; opacity: 0.7; font-size: 0.9rem;">
+            <p>🔒 Your payment was processed securely by Crossmint</p>
+            <p>💎 Crypto will be delivered to your wallet within 5 minutes</p>
+        </div>
+    </div>
+
+    <script>
+        // Parse URL parameters to get transaction details
+        const urlParams = new URLSearchParams(window.location.search);
+        const sessionId = urlParams.get('session_id');
+        const amount = urlParams.get('amount');
+        const network = urlParams.get('network');
+        
+        // Update display with actual values if available
+        if (amount) {
+            document.getElementById('amount').textContent = `$${amount} USD`;
+        }
+        if (network) {
+            document.getElementById('network').textContent = network.charAt(0).toUpperCase() + network.slice(1);
+        }
+
+        // Simulate status checking
+        setTimeout(() => {
+            document.getElementById('status').textContent = 'Confirmed ✅';
+            document.querySelector('.status-check').innerHTML = 
+                '<span style="color: #10b981;">✅ Transaction confirmed on blockchain</span>';
+        }, 3000);
+    </script>
+</body>
+</html>

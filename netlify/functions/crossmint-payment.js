@@ -87,41 +87,34 @@ exports.handler = async (event, context) => {
       ? 'https://www.crossmint.com'
       : 'https://staging.crossmint.com';
 
-    // Create order request for crypto payment (Crossmint 2025 format)
-    // Note: This creates a simplified payment order
-    const orderRequest = {
+    // Create embedded checkout session (Production-ready approach)
+    const checkoutRequest = {
+      type: 'payment',
+      totalPrice: amount.toString(),
+      currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
       recipient: {
         walletAddress
       },
-      locale: 'en-US',
-      payment: {
-        receiptEmail: customerEmail || 'customer@example.com',
-        currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
-        method: getPaymentMethod(chain)
+      metadata: {
+        customerEmail: customerEmail || 'customer@example.com',
+        chain: chain.toLowerCase(),
+        amount: amount.toString(),
+        timestamp: new Date().toISOString(),
+        source: 'crypto-payment-gateway'
       },
-      lineItems: [{
-        collectionLocator: `crossmint:default`,
-        callData: {
-          totalPrice: amount.toString(),
-          currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
-          chain: chain.toLowerCase(),
-          description: `${currency} ${amount} payment to ${chain}`,
-          metadata: {
-            timestamp: new Date().toISOString(),
-            source: 'netlify-crypto-gateway'
-          }
-        }
-      }]
+      successCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/success`,
+      failureCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/checkout?error=payment_failed`
     };
 
-    // Call Crossmint API
+    // Call Crossmint Embedded Checkout API
     const response = await axios.post(
-      `${baseUrl}/api/2022-06-09/orders`,
-      orderRequest,
+      `${baseUrl}/api/2022-06-09/checkout/sessions`,
+      checkoutRequest,
       {
         headers: {
           'Content-Type': 'application/json',
-          'X-API-KEY': process.env.CROSSMINT_API_KEY
+          'X-CLIENT-SECRET': process.env.CROSSMINT_API_KEY,
+          'X-PROJECT-ID': process.env.CROSSMINT_CLIENT_ID
         },
         timeout: 30000
       }

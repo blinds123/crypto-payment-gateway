@@ -316,19 +316,7 @@
             </div>
         </div>
 
-        <div class="checkout-widget" id="checkout-widget">
-            <div class="widget-container">
-                <div class="widget-header">
-                    <h3>💳 Complete Your Payment</h3>
-                    <div class="payment-details" id="payment-details">
-                        <!-- Payment details will be populated here -->
-                    </div>
-                </div>
-                <div id="crossmint-checkout">
-                    <!-- Crossmint embedded checkout will be loaded here -->
-                </div>
-            </div>
-        </div>
+        <!-- Checkout widget removed - redirecting to Crossmint hosted checkout -->
 
         <div class="features">
             <div class="feature">
@@ -365,7 +353,6 @@
         // DOM elements
         const form = document.getElementById('payment-form');
         const loading = document.getElementById('loading');
-        const checkoutWidget = document.getElementById('checkout-widget');
         const submitBtn = document.getElementById('submit-btn');
         const successAlert = document.getElementById('success-alert');
         const errorAlert = document.getElementById('error-alert');
@@ -406,7 +393,7 @@
                 }
 
                 currentSession = result.session;
-                showPaymentWidget(result.session, paymentData);
+                handleCheckoutSession(result.session, paymentData);
 
             } catch (error) {
                 console.error('Payment session creation failed:', error);
@@ -416,115 +403,23 @@
             }
         }
 
-        // Show payment widget
-        function showPaymentWidget(session, paymentData) {
-            // Update payment details
-            const detailsContainer = document.getElementById('payment-details');
-            detailsContainer.innerHTML = `
-                <div>
-                    <strong>Amount:</strong> ${paymentData.currency} ${paymentData.amount}
-                </div>
-                <div>
-                    <strong>Network:</strong> ${capitalizeFirst(paymentData.chain)}
-                </div>
-                <div>
-                    <strong>Wallet:</strong> ${session.walletAddress.substring(0, 10)}...
-                </div>
-                <div>
-                    <strong>Session:</strong> ${session.id.substring(0, 8)}...
-                </div>
-            `;
-
-            // Load embedded checkout
-            loadEmbeddedCheckout(session.id);
+        // Handle successful checkout session creation
+        function handleCheckoutSession(session, paymentData) {
+            // Show success message
+            showSuccess('Checkout session created! Redirecting to secure payment...');
             
-            // Show widget
-            checkoutWidget.style.display = 'block';
-            
-            // Scroll to widget
-            checkoutWidget.scrollIntoView({ behavior: 'smooth' });
-        }
-
-        // Load embedded checkout
-        async function loadEmbeddedCheckout(sessionId) {
-            try {
-                // For Netlify, we'll use the session URL directly from Crossmint
-                const embedUrl = currentSession.session.embeddedUrl || currentSession.session.url;
-                
-                // Create iframe for embedded checkout
-                const iframe = document.createElement('iframe');
-                iframe.src = embedUrl;
-                iframe.width = '100%';
-                iframe.height = '500px';
-                iframe.style.border = 'none';
-                iframe.style.borderRadius = '8px';
-                
-                document.getElementById('crossmint-checkout').innerHTML = '';
-                document.getElementById('crossmint-checkout').appendChild(iframe);
-                
-                // Set up event listeners for Crossmint events
-                setupCrossmintEventListeners();
-
-            } catch (error) {
-                console.error('Failed to load embedded checkout:', error);
-                showError('Failed to load payment widget');
-            }
-        }
-
-        // Set up Crossmint event listeners
-        function setupCrossmintEventListeners() {
-            window.addEventListener('crossmint:success', (event) => {
-                console.log('Payment successful:', event.detail);
-                showSuccess('Payment completed successfully! Your crypto will arrive shortly.');
-                
-                // Poll for payment status
-                if (currentSession) {
-                    pollPaymentStatus(currentSession.id);
+            // Redirect to Crossmint's hosted checkout
+            setTimeout(() => {
+                const checkoutUrl = session.url || session.embeddedUrl;
+                if (checkoutUrl) {
+                    window.location.href = checkoutUrl;
+                } else {
+                    showError('Unable to redirect to checkout. Please try again.');
                 }
-            });
-
-            window.addEventListener('crossmint:error', (event) => {
-                console.error('Payment failed:', event.detail);
-                showError('Payment failed. Please try again or contact support.');
-            });
+            }, 1500);
         }
 
-        // Poll payment status
-        async function pollPaymentStatus(sessionId, maxAttempts = 10) {
-            let attempts = 0;
-            
-            const poll = async () => {
-                try {
-                    attempts++;
-                    
-                    // For Netlify, status checking would need a separate function
-                    // For now, we'll rely on Crossmint's embedded widget events
-                    const result = await response.json();
-                    
-                    if (result.success && result.payment) {
-                        const payment = result.payment;
-                        
-                        if (payment.status === 'completed' && payment.transactionHash) {
-                            showSuccess(`Payment confirmed! Transaction: ${payment.transactionHash.substring(0, 20)}...`);
-                            return;
-                        } else if (payment.status === 'failed') {
-                            showError(`Payment failed: ${payment.failureReason || 'Unknown error'}`);
-                            return;
-                        }
-                    }
-                    
-                    // Continue polling if not completed and haven't exceeded max attempts
-                    if (attempts < maxAttempts) {
-                        setTimeout(poll, 5000); // Poll every 5 seconds
-                    }
-                    
-                } catch (error) {
-                    console.error('Error polling payment status:', error);
-                }
-            };
-            
-            poll();
-        }
+        // Removed old embedded checkout functions - now using hosted checkout
 
         // Utility functions
         function showLoading(show) {
