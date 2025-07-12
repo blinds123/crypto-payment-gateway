@@ -1,6 +1,9 @@
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
+// Modern Crossmint API integration
+const CROSSMINT_API_BASE = 'https://www.crossmint.com/api/2022-06-09';
+
 // Map user-friendly chain names to Crossmint payment methods
 function getPaymentMethod(chain) {
   const methodMap = {
@@ -55,6 +58,29 @@ exports.handler = async (event, context) => {
       };
     }
 
+    // Enhanced validation
+    if (amount <= 0) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Invalid amount',
+          message: 'Amount must be greater than 0'
+        })
+      };
+    }
+
+    // Email validation
+    if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Invalid email format'
+        })
+      };
+    }
+
     // Check for Crossmint credentials
     if (!process.env.CROSSMINT_CLIENT_ID || !process.env.CROSSMINT_API_KEY) {
       return {
@@ -82,43 +108,110 @@ exports.handler = async (event, context) => {
     
     const walletAddress = getWalletAddress(chain);
 
-    // Crossmint API configuration
-    const baseUrl = process.env.CROSSMINT_ENVIRONMENT === 'production'
-      ? 'https://www.crossmint.com'
-      : 'https://staging.crossmint.com';
-
     // FINAL SOLUTION: Use the real Project ID provided by user
     const projectId = 'eeb0c5f5-6ce6-46ff-b0b3-c237d2172a61';  // Your actual Crossmint project ID
     
-    // Build checkout parameters with proper clientId
-    const clientId = process.env.CROSSMINT_CLIENT_ID || 'ck_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9';
+    // Modern Crossmint API Configuration
+    const environment = process.env.CROSSMINT_ENVIRONMENT || 'production';
+    const apiKey = process.env.CROSSMINT_API_KEY;
+    const clientId = process.env.CROSSMINT_CLIENT_ID;
     
-    const checkoutParams = new URLSearchParams({
-      clientId: clientId,  // CRITICAL: Add clientId parameter
-      projectId: projectId,  // Keep projectId as well
-      amount: amount.toString(),
-      currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
-      recipientAddress: walletAddress,
-      email: customerEmail || '',
+    if (!apiKey || !clientId) {
+      throw new Error('Missing required Crossmint credentials');
+    }
+
+    // Proper currency mapping
+    const currencyMap = {
+      'USD': 'usd',
+      'EUR': 'eur', 
+      'GBP': 'gbp',
+      'CAD': 'cad',
+      'AUD': 'aud'
+    };
+    
+    const mappedCurrency = currencyMap[currency.toUpperCase()] || 'usd';
+    
+    // Create Crossmint checkout session via API
+    console.log('Creating Crossmint checkout session...');
+    
+    const checkoutData = {
+      payment: {
+        method: 'fiat',
+        currency: mappedCurrency
+      },
+      lineItems: [{
+        collectionLocator: `crossmint:${projectId}`,
+        callData: {
+          totalPrice: amount.toString(),
+          quantity: 1,
+          recipientAddress: walletAddress
+        }
+      }],
+      locale: 'en-US',
       successCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/success?amount=${amount}&network=${chain}`,
       failureCallbackUrl: `${process.env.URL || 'https://fancy-daffodil-59b9a6.netlify.app'}/checkout?error=payment_failed`
-    });
-
-    // Create Crossmint checkout URL with correct parameter names
-    const checkoutUrl = `https://www.crossmint.com/checkout?${checkoutParams.toString()}`;
-
-    return {
-      statusCode: 200,
-      headers,
-      body: JSON.stringify({
-        success: true,
-        checkoutUrl: checkoutUrl,
-        walletAddress,
-        chain,
-        amount,
-        currency
-      })
     };
+
+    // Add customer email if provided
+    if (customerEmail) {
+      checkoutData.customer = { email: customerEmail };
+    }
+
+    try {
+      // Create checkout session using proper Crossmint API
+      const response = await axios.post(`${CROSSMINT_API_BASE}/orders`, checkoutData, {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+          'X-API-KEY': clientId
+        },
+        timeout: 30000
+      });
+
+      const checkoutUrl = response.data.onRamp?.url || `https://www.crossmint.com/checkout/${response.data.id}`;
+      
+      console.log('Crossmint session created successfully:', response.data.id);
+
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          checkoutUrl: checkoutUrl,
+          sessionId: response.data.id,
+          walletAddress,
+          chain,
+          amount,
+          currency: mappedCurrency,
+          debug: {
+            apiUsed: 'crossmint-api-v2022-06-09',
+            projectId: projectId,
+            environment: environment
+          }
+        })
+      };
+      
+    } catch (crossmintError) {
+      console.error('Crossmint API Error:', crossmintError.response?.data || crossmintError.message);
+      
+      // Fallback to manual payment if API fails
+      const fallbackUrl = `/manual-payment?amount=${amount}&currency=${currency}&network=${chain}&error=api_failed`;
+      
+      return {
+        statusCode: 200,
+        headers,
+        body: JSON.stringify({
+          success: true,
+          checkoutUrl: fallbackUrl,
+          fallback: true,
+          reason: 'crossmint_api_error',
+          walletAddress,
+          chain,
+          amount,
+          currency
+        })
+      };
+    }
 
   } catch (error) {
     console.error('Payment creation error:', error.response?.data || error.message);
@@ -128,7 +221,8 @@ exports.handler = async (event, context) => {
       headers,
       body: JSON.stringify({
         error: 'Failed to create payment session',
-        message: error.response?.data?.message || error.message
+        message: error.response?.data?.message || error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
       })
     };
   }
