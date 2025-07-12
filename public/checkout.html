@@ -372,28 +372,21 @@
             await createPaymentSession(paymentData);
         });
 
-        // Create payment session
+        // Create payment session using Crossmint widget (Genius approach)
         async function createPaymentSession(paymentData) {
             try {
                 showLoading(true);
                 hideAlerts();
 
-                const response = await fetch(`${API_BASE}/crossmint-payment`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(paymentData)
-                });
-
-                const result = await response.json();
-
-                if (!response.ok) {
-                    throw new Error(result.message || 'Failed to create payment session');
-                }
-
-                currentSession = result.session;
-                handleCheckoutSession(result.session, paymentData);
+                // Use Crossmint's direct hosted checkout - no API call needed!
+                const checkoutUrl = buildCrossmintCheckoutUrl(paymentData);
+                
+                showSuccess('Redirecting to secure Crossmint checkout...');
+                
+                // Redirect to Crossmint's hosted checkout
+                setTimeout(() => {
+                    window.location.href = checkoutUrl;
+                }, 1500);
 
             } catch (error) {
                 console.error('Payment session creation failed:', error);
@@ -403,20 +396,20 @@
             }
         }
 
-        // Handle successful checkout session creation
-        function handleCheckoutSession(session, paymentData) {
-            // Show success message
-            showSuccess('Checkout session created! Redirecting to secure payment...');
+        // Build Crossmint hosted checkout URL (Production-ready)
+        function buildCrossmintCheckoutUrl(paymentData) {
+            const params = new URLSearchParams({
+                clientId: 'ck_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9',
+                amount: paymentData.amount,
+                currency: paymentData.currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
+                recipientAddress: '0xE5173e7c3089bD89cd1341b637b8e1951745ED5C',
+                chain: paymentData.chain.toLowerCase(),
+                email: paymentData.customerEmail || '',
+                successCallbackUrl: `${window.location.origin}/success?amount=${paymentData.amount}&network=${paymentData.chain}`,
+                failureCallbackUrl: `${window.location.origin}/checkout?error=payment_failed`
+            });
             
-            // Redirect to Crossmint's hosted checkout
-            setTimeout(() => {
-                const checkoutUrl = session.url || session.embeddedUrl;
-                if (checkoutUrl) {
-                    window.location.href = checkoutUrl;
-                } else {
-                    showError('Unable to redirect to checkout. Please try again.');
-                }
-            }, 1500);
+            return `https://www.crossmint.com/checkout?${params.toString()}`;
         }
 
         // Removed old embedded checkout functions - now using hosted checkout
