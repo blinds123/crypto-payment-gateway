@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Payment Gateway - Embedded Checkout</title>
+    <script src="https://www.crossmint.com/assets/crossmint.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f8fafc;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            color: #1a202c;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .checkout-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 40px;
+            align-items: start;
+        }
+
+        .payment-form {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+        }
+
+        .form-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .form-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .form-body {
+            padding: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            font-size: 18px;
+            font-weight: 600;
+            border-radius: 8px;
+            cursor: pointer;
+            width: 100%;
+            transition: transform 0.2s;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .embedded-checkout {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+            min-height: 500px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .checkout-placeholder {
+            text-align: center;
+            color: #718096;
+        }
+
+        .checkout-placeholder .icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+
+        .payment-summary {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .payment-summary h3 {
+            color: #374151;
+            margin-bottom: 15px;
+        }
+
+        .summary-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .summary-row.total {
+            font-weight: 600;
+            font-size: 16px;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 40px;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 20px;
+        }
+
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            color: white;
+            font-size: 20px;
+        }
+
+        .feature h3 {
+            color: #374151;
+            margin-bottom: 10px;
+        }
+
+        .feature p {
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .alert {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+
+        .alert-error {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #991b1b;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+        }
+
+        .spinner {
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 768px) {
+            .checkout-container {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            
+            .container {
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Crypto Payment Gateway</h1>
+            <p>Embedded checkout with instant crypto settlement</p>
+        </div>
+
+        <div class="alert alert-success" id="success-alert">
+            <strong>Success!</strong> <span id="success-message"></span>
+        </div>
+
+        <div class="alert alert-error" id="error-alert">
+            <strong>Error!</strong> <span id="error-message"></span>
+        </div>
+
+        <div class="checkout-container">
+            <!-- Payment Configuration -->
+            <div class="payment-form">
+                <div class="form-header">
+                    <h2>💳 Payment Setup</h2>
+                    <p>Configure your crypto payment</p>
+                </div>
+                
+                <div class="form-body">
+                    <form id="payment-config-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="amount">Amount</label>
+                                <input type="number" id="amount" name="amount" step="0.01" min="1" value="20" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="currency">Currency</label>
+                                <select id="currency" name="currency" required>
+                                    <option value="USD">USD - US Dollar</option>
+                                    <option value="EUR">EUR - Euro</option>
+                                    <option value="GBP">GBP - British Pound</option>
+                                    <option value="CAD">CAD - Canadian Dollar</option>
+                                    <option value="AUD">AUD - Australian Dollar</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="chain">Blockchain Network</label>
+                                <select id="chain" name="chain" required>
+                                    <option value="ethereum">Ethereum</option>
+                                    <option value="polygon" selected>Polygon</option>
+                                    <option value="arbitrum">Arbitrum</option>
+                                    <option value="optimism">Optimism</option>
+                                    <option value="base">Base</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="customerEmail">Email (Optional)</label>
+                                <input type="email" id="customerEmail" name="customerEmail" placeholder="your@email.com">
+                            </div>
+                        </div>
+
+                        <div class="payment-summary">
+                            <h3>Payment Summary</h3>
+                            <div class="summary-row">
+                                <span>Amount:</span>
+                                <span id="summary-amount">$20.00 USD</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Network:</span>
+                                <span id="summary-network">Polygon</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Receiving:</span>
+                                <span id="summary-crypto">~20 USDC</span>
+                            </div>
+                            <div class="summary-row">
+                                <span>Wallet:</span>
+                                <span>0xE517...ED5C</span>
+                            </div>
+                            <div class="summary-row total">
+                                <span>Total:</span>
+                                <span id="summary-total">$20.00 USD</span>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="btn" id="setup-checkout-btn">
+                            Setup Embedded Checkout →
+                        </button>
+                    </form>
+
+                    <div class="loading" id="loading">
+                        <div class="spinner"></div>
+                        <p>Initializing secure checkout...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Embedded Checkout Widget -->
+            <div class="embedded-checkout" id="checkout-widget">
+                <div class="checkout-placeholder">
+                    <div class="icon">💳</div>
+                    <h3>Payment Checkout</h3>
+                    <p>Configure your payment details on the left to start</p>
+                    <p style="margin-top: 10px; font-size: 12px; opacity: 0.7;">Secure payment powered by Crossmint</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="features">
+            <div class="feature">
+                <div class="feature-icon">🔒</div>
+                <h3>Secure & Safe</h3>
+                <p>Bank-grade security with embedded payment processing</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Instant Settlement</h3>
+                <p>Crypto delivered to your wallet within minutes</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">🌍</div>
+                <h3>Global Payments</h3>
+                <p>Accept payments from 197 countries worldwide</p>
+            </div>
+            
+            <div class="feature">
+                <div class="feature-icon">💎</div>
+                <h3>Multi-Chain</h3>
+                <p>Support for Ethereum, Polygon, Arbitrum and more</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const PROJECT_ID = 'eeb0c5f5-6ce6-46ff-b0b3-c237d2172a61';
+        const CLIENT_ID = 'ck_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9';
+        
+        // DOM elements
+        const form = document.getElementById('payment-config-form');
+        const loading = document.getElementById('loading');
+        const checkoutWidget = document.getElementById('checkout-widget');
+        const setupBtn = document.getElementById('setup-checkout-btn');
+        const successAlert = document.getElementById('success-alert');
+        const errorAlert = document.getElementById('error-alert');
+
+        // Wallet addresses by network
+        const walletAddresses = {
+            'ethereum': '0x742d35Cc6634C0532925a3b8D46C0Ac63e8c38B6',
+            'polygon': '0xE5173e7c3089bD89cd1341b637b8e1951745ED5C',
+            'arbitrum': '0x742d35Cc6634C0532925a3b8D46C0Ac63e8c38B6',
+            'optimism': '0x742d35Cc6634C0532925a3b8D46C0Ac63e8c38B6',
+            'base': '0x742d35Cc6634C0532925a3b8D46C0Ac63e8c38B6'
+        };
+
+        // Update summary when form changes
+        form.addEventListener('input', updateSummary);
+        form.addEventListener('change', updateSummary);
+
+        function updateSummary() {
+            const amount = document.getElementById('amount').value || '20';
+            const currency = document.getElementById('currency').value || 'USD';
+            const chain = document.getElementById('chain').value || 'polygon';
+            
+            document.getElementById('summary-amount').textContent = `$${amount} ${currency}`;
+            document.getElementById('summary-network').textContent = chain.charAt(0).toUpperCase() + chain.slice(1);
+            document.getElementById('summary-crypto').textContent = `~${amount} ${currency === 'USD' ? 'USDC' : 'ETH'}`;
+            document.getElementById('summary-total').textContent = `$${amount} ${currency}`;
+        }
+
+        // Form submission handler
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData(form);
+            const paymentData = {
+                amount: parseFloat(formData.get('amount')),
+                currency: formData.get('currency'),
+                chain: formData.get('chain'),
+                customerEmail: formData.get('customerEmail')
+            };
+
+            await setupEmbeddedCheckout(paymentData);
+        });
+
+        // Initialize embedded Crossmint checkout
+        async function setupEmbeddedCheckout(paymentData) {
+            try {
+                showLoading(true);
+                hideAlerts();
+
+                const walletAddress = walletAddresses[paymentData.chain] || walletAddresses['polygon'];
+                
+                // Clear existing checkout widget
+                checkoutWidget.innerHTML = '<div class="loading"><div class="spinner"></div><p>Loading secure checkout...</p></div>';
+
+                // Initialize Crossmint embedded checkout
+                const crossmintConfig = {
+                    clientId: CLIENT_ID,
+                    showOverlay: false,
+                    colors: {
+                        primary: '#667eea',
+                        background: '#ffffff',
+                        text: '#374151'
+                    }
+                };
+
+                // Create payment request
+                const paymentRequest = {
+                    type: 'payment',
+                    payment: {
+                        method: 'fiat',
+                        currency: paymentData.currency.toLowerCase()
+                    },
+                    lineItems: [{
+                        collectionLocator: `crossmint:${PROJECT_ID}`,
+                        callData: {
+                            totalPrice: paymentData.amount.toString(),
+                            quantity: 1,
+                            recipientAddress: walletAddress
+                        }
+                    }],
+                    customer: paymentData.customerEmail ? { email: paymentData.customerEmail } : undefined,
+                    successCallbackUrl: `${window.location.origin}/success?amount=${paymentData.amount}&network=${paymentData.chain}`,
+                    failureCallbackUrl: `${window.location.origin}/embedded-checkout?error=payment_failed`
+                };
+
+                // Initialize embedded checkout using Crossmint SDK
+                if (window.CrossmintSDK) {
+                    const checkout = new window.CrossmintSDK.EmbeddedCheckout(crossmintConfig);
+                    await checkout.create(paymentRequest, checkoutWidget);
+                    
+                    showSuccess('Embedded checkout initialized successfully!');
+                } else {
+                    throw new Error('Crossmint SDK not loaded');
+                }
+
+            } catch (error) {
+                console.error('Embedded checkout setup failed:', error);
+                
+                // Fallback to hosted checkout
+                await createHostedCheckout(paymentData);
+                
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        // Fallback to hosted checkout if embedded fails
+        async function createHostedCheckout(paymentData) {
+            try {
+                const response = await fetch('/.netlify/functions/crossmint-payment', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(paymentData)
+                });
+
+                const result = await response.json();
+
+                if (response.ok && result.success) {
+                    checkoutWidget.innerHTML = `
+                        <div style="text-align: center;">
+                            <div class="icon" style="font-size: 3rem; margin-bottom: 20px;">🚀</div>
+                            <h3>Redirecting to Secure Checkout</h3>
+                            <p style="margin: 15px 0;">Opening Crossmint payment page...</p>
+                            <a href="${result.checkoutUrl}" target="_blank" class="btn" style="display: inline-block; text-decoration: none; margin-top: 20px;">
+                                Open Payment Page →
+                            </a>
+                        </div>
+                    `;
+                    
+                    // Auto-redirect after 2 seconds
+                    setTimeout(() => {
+                        window.open(result.checkoutUrl, '_blank');
+                    }, 2000);
+                    
+                    showSuccess('Redirecting to hosted checkout...');
+                } else {
+                    throw new Error(result.error || 'Failed to create checkout');
+                }
+
+            } catch (error) {
+                console.error('Hosted checkout fallback failed:', error);
+                showError('Checkout initialization failed. Please try again.');
+                
+                // Final fallback to manual payment
+                checkoutWidget.innerHTML = `
+                    <div style="text-align: center;">
+                        <div class="icon" style="font-size: 3rem; margin-bottom: 20px;">💳</div>
+                        <h3>Manual Payment</h3>
+                        <p style="margin: 15px 0;">Complete your payment manually</p>
+                        <a href="/manual-payment?amount=${paymentData.amount}&currency=${paymentData.currency}&network=${paymentData.chain}" class="btn" style="display: inline-block; text-decoration: none;">
+                            Manual Payment Guide →
+                        </a>
+                    </div>
+                `;
+            }
+        }
+
+        // Utility functions
+        function showLoading(show) {
+            loading.style.display = show ? 'block' : 'none';
+            setupBtn.disabled = show;
+            form.style.opacity = show ? '0.6' : '1';
+        }
+
+        function showSuccess(message) {
+            document.getElementById('success-message').textContent = message;
+            successAlert.style.display = 'block';
+            errorAlert.style.display = 'none';
+        }
+
+        function showError(message) {
+            document.getElementById('error-message').textContent = message;
+            errorAlert.style.display = 'block';
+            successAlert.style.display = 'none';
+        }
+
+        function hideAlerts() {
+            successAlert.style.display = 'none';
+            errorAlert.style.display = 'none';
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSummary();
+            console.log('Embedded Crypto Payment Gateway initialized');
+            
+            // Check if Crossmint SDK loaded
+            if (!window.CrossmintSDK) {
+                console.warn('Crossmint SDK not available, will use fallback methods');
+            }
+        });
+
+        // Handle URL parameters for errors
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('error') === 'payment_failed') {
+            showError('Payment was cancelled or failed. Please try again.');
+        }
+    </script>
+</body>
+</html>
