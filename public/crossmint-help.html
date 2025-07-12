@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crossmint Setup Help - Crypto Payment Gateway</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            text-align: center;
+            max-width: 800px;
+            background: rgba(255, 255, 255, 0.1);
+            padding: 40px;
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+        }
+
+        .warning-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+        }
+
+        .error-box {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .error-box h3 {
+            margin-bottom: 10px;
+            color: #fbbf24;
+        }
+
+        .error-detail {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-size: 0.9rem;
+        }
+
+        .steps {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            margin: 30px 0;
+            text-align: left;
+        }
+
+        .steps h3 {
+            margin-bottom: 20px;
+            text-align: center;
+            color: #10b981;
+        }
+
+        .step {
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .step::before {
+            content: counter(step-counter);
+            counter-increment: step-counter;
+            position: absolute;
+            left: 0;
+            background: #10b981;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .steps {
+            counter-reset: step-counter;
+        }
+
+        .btn {
+            background: white;
+            color: #dc2626;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            transition: transform 0.2s;
+            margin: 10px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+
+        .code-box {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+        }
+
+        .code-box pre {
+            color: #10b981;
+            overflow-x: auto;
+        }
+
+        .info-box {
+            background: rgba(59, 130, 246, 0.2);
+            border: 1px solid rgba(59, 130, 246, 0.5);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="warning-icon">⚠️</div>
+        <h1>Crossmint Project Setup Required</h1>
+        <p style="font-size: 1.2rem; margin-bottom: 30px; opacity: 0.9;">
+            We've identified the issue - let's fix it together!
+        </p>
+        
+        <div class="error-box">
+            <h3>🔍 Issue Detected</h3>
+            <p>The Project ID extracted from your client key is not recognized by Crossmint.</p>
+            <div class="error-detail">
+                Your Client Key: ck_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9
+            </div>
+        </div>
+
+        <div class="steps">
+            <h3>✅ How to Fix This</h3>
+            <div class="step">
+                <strong>Log into Crossmint Dashboard</strong><br>
+                Visit <a href="https://app.crossmint.com" target="_blank" style="color: #60a5fa;">https://app.crossmint.com</a>
+            </div>
+            <div class="step">
+                <strong>Navigate to Your Project</strong><br>
+                Look for "Projects" or "API Keys" in the dashboard
+            </div>
+            <div class="step">
+                <strong>Find Your Project ID</strong><br>
+                It will be a shorter ID like "proj_12345" or similar (NOT the full client key)
+            </div>
+            <div class="step">
+                <strong>Create a Collection (if needed)</strong><br>
+                Some Crossmint accounts require creating a collection first
+            </div>
+            <div class="step">
+                <strong>Update Your Environment Variables</strong><br>
+                Add a new variable: CROSSMINT_PROJECT_ID with your actual project ID
+            </div>
+        </div>
+
+        <div class="info-box">
+            <h3>💡 Understanding Crossmint Keys</h3>
+            <p><strong>Client Key (ck_):</strong> Used for authentication</p>
+            <p><strong>Server Key (sk_):</strong> Used for API authentication</p>
+            <p><strong>Project ID:</strong> A separate shorter identifier for your project</p>
+            <p style="margin-top: 10px;">These are different values - the Project ID is not part of your client key!</p>
+        </div>
+
+        <div class="code-box">
+            <h3>📝 Once you have your Project ID, update this:</h3>
+            <pre>
+// In your Netlify dashboard, add:
+CROSSMINT_PROJECT_ID = "your-actual-project-id"
+
+// The checkout URL will use:
+projectId: process.env.CROSSMINT_PROJECT_ID
+            </pre>
+        </div>
+
+        <div style="margin: 30px 0;">
+            <a href="https://app.crossmint.com" target="_blank" class="btn btn-success">
+                🚀 Open Crossmint Dashboard
+            </a>
+            <a href="https://docs.crossmint.com" target="_blank" class="btn">
+                📚 Crossmint Docs
+            </a>
+            <a href="/manual-payment" class="btn">
+                💳 Use Manual Payment
+            </a>
+        </div>
+
+        <div style="margin-top: 30px; opacity: 0.8; font-size: 0.9rem;">
+            <p>🆘 <strong>Need Help?</strong> Contact Crossmint support with your client key</p>
+            <p>📧 <strong>Support:</strong> support@crossmint.com</p>
+            <p>💬 <strong>Discord:</strong> Join their Discord for quick help</p>
+        </div>
+    </div>
+</body>
+</html>

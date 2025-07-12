@@ -87,12 +87,11 @@ exports.handler = async (event, context) => {
       ? 'https://www.crossmint.com'
       : 'https://staging.crossmint.com';
 
-    // ULTRA-FIXED APPROACH: Extract project ID from client ID and use correct parameters
-    // Extract project ID from client key (remove ck_production_ prefix)
-    const projectId = process.env.CROSSMINT_CLIENT_ID.replace('ck_production_', '').replace('ck_staging_', '');
+    // FINAL SOLUTION: Use the real Project ID provided by user
+    const projectId = 'eeb0c5f5-6ce6-46ff-b0b3-c237d2172a61';  // Your actual Crossmint project ID
     
     const checkoutParams = new URLSearchParams({
-      projectId: projectId,  // FIXED: Use projectId not clientId
+      projectId: projectId,  // Using your real Project ID
       amount: amount.toString(),
       currency: currency.toUpperCase() === 'USD' ? 'usdc' : 'eth',
       recipientAddress: walletAddress,
