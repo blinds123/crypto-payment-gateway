@@ -462,7 +462,7 @@
                 checkoutWidget.innerHTML = '<div class="loading"><div class="spinner"></div><p>Creating secure checkout session...</p></div>';
 
                 // Use our working serverless function to create checkout URL
-                const response = await fetch('/.netlify/functions/crossmint-payment', {
+                const response = await fetch('/.netlify/functions/crossmint-simple', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
