@@ -61,8 +61,8 @@ exports.handler = async (event, context) => {
 
     // Crossmint API configuration
     const baseUrl = process.env.CROSSMINT_ENVIRONMENT === 'production'
-      ? 'https://api.crossmint.com'
-      : 'https://api.staging.crossmint.com';
+      ? 'https://www.crossmint.com'
+      : 'https://staging.crossmint.com';
 
     // Create payment request
     const paymentRequest = {

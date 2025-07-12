@@ -29,8 +29,8 @@ exports.handler = async (event, context) => {
       clientId: process.env.CROSSMINT_CLIENT_ID ? 'configured' : 'missing',
       environment: process.env.CROSSMINT_ENVIRONMENT || 'staging',
       baseUrl: process.env.CROSSMINT_ENVIRONMENT === 'production' 
-        ? 'https://api.crossmint.com' 
-        : 'https://api.staging.crossmint.com'
+        ? 'https://www.crossmint.com' 
+        : 'https://staging.crossmint.com'
     };
 
     return {
