@@ -1,7 +1,7 @@
 const axios = require('axios');
 const { v4: uuidv4 } = require('uuid');
 
-// Modern Crossmint API integration
+// Modern Crossmint API integration v2.0
 const CROSSMINT_API_BASE = 'https://www.crossmint.com/api/2022-06-09';
 
 // Map user-friendly chain names to Crossmint payment methods
