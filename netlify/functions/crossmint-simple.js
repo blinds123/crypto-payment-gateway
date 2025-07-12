@@ -58,8 +58,9 @@ exports.handler = async (event, context) => {
     // This is the most reliable method that doesn't require complex API setup
     
     const crossmintUrl = `https://www.crossmint.com/checkout?` + new URLSearchParams({
-      // Use the working parameters from successful implementations
+      // REQUIRED: Both client-id and projectId
       'client-id': 'ck_production_ABEjX378KrXNmt4oAnUpUwubzh56u9ra2Wd5U5hMp3kysx5SmiYAP4EywJ5p1aPpsvrzjrkoxF4mEFxLXDyAshWUfpKcx34j8yZjbj2yzMoNbDMYPRUZro1ZKRBWdj6WhJDr5YRyKdXYgFJLL7GfKG5cu5y1fL2WHsJpw4GwzqkYVnVyBgmi9oK5QkH3FnGsMNgpkAbcmPY8rpmx3ZAPjJQ9',
+      'projectId': 'eeb0c5f5-6ce6-46ff-b0b3-c237d2172a61',
       'recipient-address': walletAddress,
       'email': customerEmail || '',
       'locale': 'en-US',
